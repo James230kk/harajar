@@ -21,20 +21,14 @@ _template_dir = BASE_DIR / "templates"
 app = Flask(__name__, template_folder=str(_template_dir))
 
 # Default data directory (relative to script location)
-# Initialize with error handling for Vercel
+DATA_DIR = BASE_DIR / "scraped_data"
+CONFIG_FILE = BASE_DIR / "scraper_config.json"
+
+# Create data directory if it doesn't exist
 try:
-    DATA_DIR = BASE_DIR / "scraped_data"
-    CONFIG_FILE = BASE_DIR / "scraper_config.json"
-    
-    # Create directories if they don't exist (but don't fail if we can't)
-    try:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-    except:
-        pass  # Continue even if directory creation fails
-except Exception as e:
-    # Fallback paths if BASE_DIR calculation fails
-    DATA_DIR = Path("scraped_data")
-    CONFIG_FILE = Path("scraper_config.json")
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except:
+    pass  # Continue even if directory creation fails
 
 # Scraping status
 scraping_status = {
