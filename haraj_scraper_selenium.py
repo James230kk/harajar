@@ -22,6 +22,8 @@ import csv
 from pathlib import Path
 import requests
 import random
+import shutil
+import glob
 
 
 class HarajScraperSelenium:
@@ -106,31 +108,38 @@ class HarajScraperSelenium:
         import shutil
         system_chromedriver = shutil.which('chromedriver')
         if system_chromedriver:
-            chromedriver_paths.insert(0, system_chromedriver)
+            chromedriver_paths.append(system_chromedriver)
+        
+        # Add standard locations
+        chromedriver_paths.extend([
+            '/usr/bin/chromedriver',
+            '/usr/local/bin/chromedriver',
+            '/opt/chromedriver/chromedriver',
+        ])
+        
+        # Check nix store for chromedriver
+        nix_chromedriver_glob = '/nix/store/*/bin/chromedriver'
+        nix_matches = glob.glob(nix_chromedriver_glob)
+        if nix_matches:
+            chromedriver_paths.extend(nix_matches)
         
         driver_found = False
         driver_path = None
         
         # Try system chromedriver first
         for path in chromedriver_paths:
-            if '*' in path:
-                # Handle nix store wildcard
-                import glob
-                matches = glob.glob(path)
-                if matches:
-                    path = matches[0]
-            
             if os.path.exists(path):
                 try:
                     # Make executable
                     os.chmod(path, 0o755)
-                    # Test if it works
+                    # Test if it works (quick test)
                     service = Service(path)
                     test_driver = webdriver.Chrome(service=service, options=chrome_options)
                     test_driver.quit()
                     # If we get here, it works
                     driver_path = path
                     driver_found = True
+                    print(f"Using system ChromeDriver at: {path}")
                     break
                 except Exception as test_error:
                     print(f"ChromeDriver at {path} failed test: {test_error}")
