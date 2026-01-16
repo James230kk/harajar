@@ -612,8 +612,13 @@
                         statusDiv.style.display = 'none';
                         if (data.error) {
                             alert('انتهى الاستخراج مع خطأ: ' + data.error);
+                            // Don't reload on error - let user see the error and try again
+                        } else if (data.progress > 0) {
+                            // Only reload if scraping completed successfully
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
                         }
-                        location.reload();
                     }
                 })
                 .catch(error => {
