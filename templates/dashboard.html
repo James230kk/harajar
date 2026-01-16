@@ -302,10 +302,10 @@
                         <input type="number" id="max_listings" class="form-control" min="1" max="100" value="10" style="width: 100px;">
                     </div>
                     <div class="col-md-auto">
-                        <button type="button" id="startScrapingBtn" class="btn btn-primary" onclick="startScraping(); return false;">
+                        <button type="button" id="startScrapingBtn" class="btn btn-primary" onclick="event.preventDefault(); event.stopPropagation(); startScraping(event); return false;">
                             <i class="bi bi-play-fill"></i> بدء الاستخراج
                         </button>
-                        <button type="button" id="stopScrapingBtn" class="btn btn-danger" style="display: none;" onclick="stopScraping(); return false;">
+                        <button type="button" id="stopScrapingBtn" class="btn btn-danger" style="display: none;" onclick="event.preventDefault(); event.stopPropagation(); stopScraping(event); return false;">
                             <i class="bi bi-stop-fill"></i> إيقاف
                         </button>
                     </div>
@@ -446,7 +446,7 @@
         let statusInterval;
 
         function startScraping(event) {
-            // Prevent any default form submission
+            // Prevent any default form submission or page refresh
             if (event) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -457,6 +457,7 @@
             const stopBtn = document.getElementById('stopScrapingBtn');
             const statusDiv = document.getElementById('scrapingStatus');
 
+            // Disable button immediately to prevent multiple clicks
             startBtn.disabled = true;
             stopBtn.style.display = 'inline-block';
             statusDiv.style.display = 'block';
@@ -464,6 +465,7 @@
             document.getElementById('progressBar').style.width = '0%';
             document.getElementById('progressText').innerText = '0 / 0';
 
+            // Use fetch with proper error handling
             fetch('/api/start-scraping', {
                 method: 'POST',
                 headers: {
@@ -498,6 +500,30 @@
             
             return false; // Prevent any form submission
         }
+        
+        // Also attach event listener to prevent any form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const startBtn = document.getElementById('startScrapingBtn');
+            const stopBtn = document.getElementById('stopScrapingBtn');
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startScraping(e);
+                    return false;
+                });
+            }
+            
+            if (stopBtn) {
+                stopBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    stopScraping(e);
+                    return false;
+                });
+            }
+        });
 
         function stopScraping(event) {
             // Prevent any default form submission
