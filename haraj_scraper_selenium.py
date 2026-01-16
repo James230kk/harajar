@@ -60,14 +60,27 @@ class HarajScraperSelenium:
         chrome_options.add_argument('--lang=ar,en')
         
         # For Railway/Linux environments, try to use system Chrome if available
-        if os.path.exists('/usr/bin/google-chrome'):
-            chrome_options.binary_location = '/usr/bin/google-chrome'
-        elif os.path.exists('/usr/bin/google-chrome-stable'):
-            chrome_options.binary_location = '/usr/bin/google-chrome-stable'
-        elif os.path.exists('/usr/bin/chromium'):
-            chrome_options.binary_location = '/usr/bin/chromium'
-        elif os.path.exists('/usr/bin/chromium-browser'):
-            chrome_options.binary_location = '/usr/bin/chromium-browser'
+        # Nixpacks installs Chromium, so check for it first
+        if os.path.exists('/nix/store'):
+            # Nix environment - try to find chromium in nix store
+            import subprocess
+            try:
+                chromium_path = subprocess.check_output(['which', 'chromium'], stderr=subprocess.DEVNULL).decode().strip()
+                if chromium_path:
+                    chrome_options.binary_location = chromium_path
+            except:
+                pass
+        
+        # Fallback to standard locations
+        if not chrome_options.binary_location:
+            if os.path.exists('/usr/bin/google-chrome'):
+                chrome_options.binary_location = '/usr/bin/google-chrome'
+            elif os.path.exists('/usr/bin/google-chrome-stable'):
+                chrome_options.binary_location = '/usr/bin/google-chrome-stable'
+            elif os.path.exists('/usr/bin/chromium'):
+                chrome_options.binary_location = '/usr/bin/chromium'
+            elif os.path.exists('/usr/bin/chromium-browser'):
+                chrome_options.binary_location = '/usr/bin/chromium-browser'
         
         # User agents for rotation (ToS compliance)
         self.user_agents = [
