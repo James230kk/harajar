@@ -276,15 +276,6 @@ def download_csv():
         download_name='haraj_listings.csv'
     )
 
-@app.route('/listing/<listing_id>')
-def view_listing(listing_id):
-    """View details of a specific listing"""
-    listings = load_listings()
-    listing = next((l for l in listings if l.get('listing_id') == listing_id), None)
-    if listing:
-        return render_template('listing_detail.html', listing=listing)
-    return "Listing not found", 404
-
 def run_scraper(max_listings, category_url):
     """Run the scraper in background"""
     global scraping_status
