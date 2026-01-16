@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ listing.title }} - Haraj Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+        }
+        
+        .detail-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .detail-section {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-box {
+            background-color: #f0f9ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        
+        .phone-number {
+            color: #198754;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .info-item {
+            margin-bottom: 0.75rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <a href="/" class="navbar-brand">
+                <i class="bi bi-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="card detail-card">
+            <div class="card-body p-4">
+                <h1 class="mb-4">{{ listing.title }}</h1>
+                
+                <div class="detail-section">
+                    <h3 class="section-title">الوصف</h3>
+                    <p class="text-muted">{{ listing.description or 'لا يوجد وصف' }}</p>
+                </div>
+                
+                <div class="detail-section">
+                    <h3 class="section-title">المعلومات الأساسية</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label"><i class="bi bi-geo-alt"></i> المدينة:</span>
+                                <span class="text-muted">{{ listing.city or 'غير محدد' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="bi bi-geo-alt-fill"></i> الموقع:</span>
+                                <span class="text-muted">{{ listing.location or 'غير محدد' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="bi bi-tag"></i> الفئة:</span>
+                                <span class="text-muted">{{ listing.category or 'غير محدد' }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label"><i class="bi bi-currency-exchange"></i> السعر:</span>
+                                <span class="text-success fw-bold">{{ listing.price or 'غير محدد' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="bi bi-clock"></i> وقت النشر:</span>
+                                <span class="text-muted">{{ listing.posted_time or 'غير محدد' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if listing.contact_info and listing.contact_info.phone_numbers %}
+                <div class="detail-section">
+                    <h3 class="section-title">معلومات الاتصال</h3>
+                    <div class="contact-box">
+                        {% for phone in listing.contact_info.phone_numbers %}
+                        <div class="phone-number mb-2">
+                            <i class="bi bi-telephone"></i> {{ phone }}
+                        </div>
+                        {% endfor %}
+                        {% if listing.contact_info.whatsapp_link %}
+                        <div class="mb-2">
+                            <a href="{{ listing.contact_info.whatsapp_link }}" target="_blank" class="text-success text-decoration-none">
+                                <i class="bi bi-whatsapp"></i> واتساب
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if listing.contact_info.emails %}
+                        <div class="mb-2">
+                            <span class="info-label"><i class="bi bi-envelope"></i> البريد الإلكتروني:</span>
+                            <span class="text-muted">{{ listing.contact_info.emails|join(', ') }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="detail-section">
+                    <h3 class="section-title">البائع</h3>
+                    <div class="info-item">
+                        <span class="info-label"><i class="bi bi-person"></i> الاسم:</span>
+                        <span class="text-muted">{{ listing.seller_name or 'غير معروف' }}</span>
+                    </div>
+                    {% if listing.seller_url %}
+                    <div class="info-item">
+                        <a href="{{ listing.seller_url }}" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-box-arrow-up-right"></i> عرض ملف البائع
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if listing.tags %}
+                <div class="detail-section">
+                    <h3 class="section-title">العلامات</h3>
+                    <div>
+                        {% for tag in listing.tags %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="detail-section">
+                    <h3 class="section-title">الروابط</h3>
+                    <a href="{{ listing.url }}" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right"></i> عرض الإعلان الأصلي على حراج
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

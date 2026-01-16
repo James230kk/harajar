@@ -1,0 +1,66 @@
+# Scraped data
+scraped_data/
+scraper_config.json
+example_output/
+example_output_selenium/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+
+# Data files
+*.csv
+
+# Config files (keep structure, ignore credentials)
+scraper_config.json
+!example_*.json
+
+# Selenium
+chromedriver
+geckodriver
+*.exe
