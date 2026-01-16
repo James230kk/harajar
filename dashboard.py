@@ -22,8 +22,16 @@ else:
     BASE_DIR = _script_dir
 
 # Initialize Flask app with explicit template folder (works in Vercel)
-_template_dir = BASE_DIR / "templates"
-app = Flask(__name__, template_folder=str(_template_dir))
+try:
+    _template_dir = BASE_DIR / "templates"
+    # Verify template directory exists, fallback to default if not
+    if not _template_dir.exists():
+        # Try relative path
+        _template_dir = Path("templates")
+    app = Flask(__name__, template_folder=str(_template_dir))
+except Exception as e:
+    # Fallback: use default template folder
+    app = Flask(__name__)
 
 # Default data directory (relative to script location)
 # Initialize with error handling for Vercel
