@@ -152,22 +152,41 @@ class HarajScraperSelenium:
                 driver_path = ChromeDriverManager().install()
                 # Make sure driver is executable (important for Linux)
                 if os.path.exists(driver_path):
+                    # Set executable permissions
                     os.chmod(driver_path, 0o755)
-                    # Also make sure parent directory is accessible
+                    # Also make sure parent directories are accessible
                     driver_dir = os.path.dirname(driver_path)
-                    if os.path.exists(driver_dir):
-                        os.chmod(driver_dir, 0o755)
-                driver_found = True
+                    while driver_dir and driver_dir != '/':
+                        if os.path.exists(driver_dir):
+                            os.chmod(driver_dir, 0o755)
+                        driver_dir = os.path.dirname(driver_dir)
+                    
+                    # Verify the file is actually executable
+                    if not os.access(driver_path, os.X_OK):
+                        raise Exception(f"ChromeDriver at {driver_path} is not executable even after chmod")
+                    
+                    driver_found = True
+                    print(f"Using webdriver-manager ChromeDriver at: {driver_path}")
+                else:
+                    raise Exception(f"ChromeDriver path from webdriver-manager does not exist: {driver_path}")
             except Exception as wdm_error:
-                raise Exception(f"Failed to initialize ChromeDriver. System driver not found, and webdriver-manager failed: {str(wdm_error)}")
+                raise Exception(f"Failed to initialize ChromeDriver. System driver not found, and webdriver-manager failed: {str(wdm_error)}. Make sure Chrome/Chromium and chromedriver are installed via nixpacks.")
         
         # Initialize the actual driver
-        if driver_path:
+        if driver_path and driver_found:
             try:
                 service = Service(driver_path)
                 self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                print(f"ChromeDriver initialized successfully at: {driver_path}")
             except Exception as init_error:
-                raise Exception(f"Failed to start ChromeDriver at {driver_path}: {str(init_error)}. Make sure Chrome/Chromium and all required libraries are installed.")
+                error_msg = f"Failed to start ChromeDriver at {driver_path}: {str(init_error)}"
+                error_msg += "\nMake sure:"
+                error_msg += "\n1. Chrome/Chromium is installed (check nixpacks.toml)"
+                error_msg += "\n2. ChromeDriver is installed (check nixpacks.toml)"
+                error_msg += "\n3. All required libraries are installed (libnss3, libatk-bridge2.0-0, etc.)"
+                raise Exception(error_msg)
+        else:
+            raise Exception("ChromeDriver path not found or not initialized")
         self.driver.implicitly_wait(3)  # Reduced for speed
         
         # Session for downloading images
