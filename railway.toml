@@ -1,5 +1,3 @@
-[build]
-builder = "NIXPACKS"
-
+# Railway will auto-detect Dockerfile if no builder is specified
 [deploy]
 startCommand = "gunicorn dashboard:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
