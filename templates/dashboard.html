@@ -302,10 +302,10 @@
                         <input type="number" id="max_listings" class="form-control" min="1" max="100" value="10" style="width: 100px;">
                     </div>
                     <div class="col-md-auto">
-                        <button id="startScrapingBtn" class="btn btn-primary" onclick="startScraping()">
+                        <button type="button" id="startScrapingBtn" class="btn btn-primary" onclick="startScraping(); return false;">
                             <i class="bi bi-play-fill"></i> بدء الاستخراج
                         </button>
-                        <button id="stopScrapingBtn" class="btn btn-danger" style="display: none;" onclick="stopScraping()">
+                        <button type="button" id="stopScrapingBtn" class="btn btn-danger" style="display: none;" onclick="stopScraping(); return false;">
                             <i class="bi bi-stop-fill"></i> إيقاف
                         </button>
                     </div>
