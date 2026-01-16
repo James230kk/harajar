@@ -60,8 +60,9 @@ Thumbs.db
 scraper_config.json
 !example_*.json
 
-# Vercel
+# Deployment
 .vercel
+.railway
 
 # Selenium
 chromedriver

@@ -12,14 +12,9 @@ import threading
 import subprocess
 import sys
 
-# Get the directory where this script is located (works in production and Vercel)
-# In Vercel, __file__ might be in api/ directory, so we need to handle that
+# Get the directory where this script is located
 _script_dir = Path(__file__).parent.absolute()
-# If we're in api/ directory (Vercel), go up one level
-if _script_dir.name == 'api':
-    BASE_DIR = _script_dir.parent.absolute()
-else:
-    BASE_DIR = _script_dir
+BASE_DIR = _script_dir
 
 # Initialize Flask app with explicit template folder (works in Vercel)
 try:
