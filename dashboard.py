@@ -277,8 +277,13 @@ def run_scraper(max_listings, category_url):
     scraping_status['error'] = None
     
     try:
-        # Import scraper
-        from haraj_scraper_selenium import HarajScraperSelenium
+        # Import scraper (may fail in Vercel due to Selenium)
+        try:
+            from haraj_scraper_selenium import HarajScraperSelenium
+        except ImportError as e:
+            scraping_status['error'] = f"Selenium scraper not available in this environment: {str(e)}"
+            scraping_status['is_running'] = False
+            return
         
         # Load credentials from config
         config = load_config()
