@@ -149,6 +149,9 @@ class HarajScraperSelenium:
         if not driver_found:
             try:
                 print("System ChromeDriver not found, using webdriver-manager...")
+                print("WARNING: webdriver-manager ChromeDriver may have dependency issues on Railway.")
+                print("Make sure chromedriver is in nixpacks.toml nixPkgs list.")
+                
                 driver_path = ChromeDriverManager().install()
                 # Make sure driver is executable (important for Linux)
                 if os.path.exists(driver_path):
@@ -156,21 +159,45 @@ class HarajScraperSelenium:
                     os.chmod(driver_path, 0o755)
                     # Also make sure parent directories are accessible
                     driver_dir = os.path.dirname(driver_path)
-                    while driver_dir and driver_dir != '/':
+                    depth = 0
+                    while driver_dir and driver_dir != '/' and depth < 5:
                         if os.path.exists(driver_dir):
-                            os.chmod(driver_dir, 0o755)
+                            try:
+                                os.chmod(driver_dir, 0o755)
+                            except:
+                                pass
                         driver_dir = os.path.dirname(driver_dir)
+                        depth += 1
                     
                     # Verify the file is actually executable
                     if not os.access(driver_path, os.X_OK):
                         raise Exception(f"ChromeDriver at {driver_path} is not executable even after chmod")
+                    
+                    # Try to verify it can run (check if it's a valid binary)
+                    try:
+                        import subprocess
+                        result = subprocess.run([driver_path, '--version'], 
+                                              capture_output=True, 
+                                              timeout=5,
+                                              stderr=subprocess.DEVNULL)
+                        if result.returncode != 0:
+                            print(f"Warning: ChromeDriver version check failed, but continuing...")
+                    except Exception as version_check_error:
+                        print(f"Warning: Could not verify ChromeDriver version: {version_check_error}")
                     
                     driver_found = True
                     print(f"Using webdriver-manager ChromeDriver at: {driver_path}")
                 else:
                     raise Exception(f"ChromeDriver path from webdriver-manager does not exist: {driver_path}")
             except Exception as wdm_error:
-                raise Exception(f"Failed to initialize ChromeDriver. System driver not found, and webdriver-manager failed: {str(wdm_error)}. Make sure Chrome/Chromium and chromedriver are installed via nixpacks.")
+                error_msg = f"Failed to initialize ChromeDriver.\n"
+                error_msg += f"System driver not found, and webdriver-manager failed: {str(wdm_error)}\n"
+                error_msg += f"\nTroubleshooting:\n"
+                error_msg += f"1. Make sure 'chromedriver' is in nixpacks.toml nixPkgs list\n"
+                error_msg += f"2. Make sure 'chromium' is in nixpacks.toml nixPkgs list\n"
+                error_msg += f"3. Check Railway logs for chromedriver installation\n"
+                error_msg += f"4. Status code 127 usually means missing shared libraries (libnss3, etc.)"
+                raise Exception(error_msg)
         
         # Initialize the actual driver
         if driver_path and driver_found:
