@@ -81,9 +81,37 @@ class HarajScraperSelenium:
         user_agent = random.choice(self.user_agents)
         chrome_options.add_argument(f'user-agent={user_agent}')
         
-        # Initialize driver
-        service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Initialize driver with better error handling for Railway
+        try:
+            # Try to use ChromeDriverManager first
+            driver_path = ChromeDriverManager().install()
+            # Make sure driver is executable (important for Linux)
+            if os.path.exists(driver_path):
+                os.chmod(driver_path, 0o755)
+            service = Service(driver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        except Exception as e:
+            # Fallback: try to find chromedriver in common locations
+            chromedriver_paths = [
+                '/usr/bin/chromedriver',
+                '/usr/local/bin/chromedriver',
+                '/opt/chromedriver/chromedriver',
+            ]
+            
+            driver_found = False
+            for path in chromedriver_paths:
+                if os.path.exists(path):
+                    try:
+                        os.chmod(path, 0o755)
+                        service = Service(path)
+                        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                        driver_found = True
+                        break
+                    except:
+                        continue
+            
+            if not driver_found:
+                raise Exception(f"Failed to initialize ChromeDriver: {str(e)}. Chrome/Chromium may not be installed on this system.")
         self.driver.implicitly_wait(3)  # Reduced for speed
         
         # Session for downloading images
