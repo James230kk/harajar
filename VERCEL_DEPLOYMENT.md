@@ -1,23 +1,20 @@
-# Vercel Deployment Guide
+# Vercel Deployment Guide (deprecated)
 
-## ✅ Vercel Configuration Complete
+**This project is deployed on Railway, not Vercel.** Vercel config (index.py, vercel.json, pyproject.toml) has been removed. For deployment and subdomain setup, see **SUBDOMAIN_LIVE.md**.
 
-The project is now configured for Vercel deployment with:
+---
 
-1. **`api/index.py`** - Vercel serverless function entrypoint
-2. **`vercel.json`** - Vercel configuration file
-3. **Path handling** - Updated to work in Vercel's serverless environment
+## Legacy: Vercel Configuration (removed)
 
-## 🚀 Deployment Steps
+The following were removed in favor of Railway:
 
-1. **Push the changes to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Add Vercel deployment configuration"
-   git push origin main
-   ```
+- ~~`index.py`~~ – Vercel entrypoint (removed)
+- ~~`vercel.json`~~ – (removed)
+- ~~`pyproject.toml`~~ – (removed)
 
-2. **Vercel will automatically detect and deploy** from your GitHub repository
+## Deploy on Railway
+
+See **SUBDOMAIN_LIVE.md** for steps: connect GitHub repo to Railway, add a volume, set `HARAJ_DATA_DIR`, and use your subdomain.
 
 ## ⚠️ Important Notes
 
@@ -55,10 +52,10 @@ The project is now configured for Vercel deployment with:
 
 ## 📝 Current Configuration
 
-- **Entrypoint**: `api/index.py`
-- **Flask App**: Exported as `application` (Vercel requirement)
+- **Entrypoint**: `index.py` (re-exports `app` from `dashboard.py`)
+- **Flask App**: Exported as `app` (Vercel detects it from `pyproject.toml` → `index:app`)
 - **Routes**: All routes handled by Flask app
-- **Python Version**: 3.9 (specified in `runtime.txt`)
+- **Data on Vercel**: Writes go to `/tmp` (ephemeral; use Railway for persistent data)
 
 ## 🔧 Troubleshooting
 
@@ -66,8 +63,8 @@ If deployment fails:
 
 1. Check Vercel build logs
 2. Ensure all dependencies are in `requirements.txt`
-3. Check that `api/index.py` exists and exports `application`
-4. Verify `vercel.json` configuration
+3. Check that `index.py` exists and exports `app` (from dashboard)
+4. Verify `vercel.json` and `pyproject.toml` are in the repo
 
 ## 📚 Resources
 
