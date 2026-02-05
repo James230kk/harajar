@@ -1,3 +1,4 @@
 # Railway will auto-detect Dockerfile if no builder is specified
+# start.sh expands PORT at runtime so gunicorn gets a numeric port
 [deploy]
-startCommand = "gunicorn dashboard:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+startCommand = "/app/start.sh"
