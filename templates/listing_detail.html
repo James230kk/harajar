@@ -4,64 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ listing.title }} - Haraj Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --nav-bg: #0f172a;
+            --accent: #0d9488;
+            --accent-hover: #0f766e;
+            --accent-light: #ccfbf1;
+            --text-primary: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+        * { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; }
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
             direction: rtl;
+            min-height: 100vh;
         }
-        
+        .navbar-custom {
+            background: var(--nav-bg);
+            padding: 0.75rem 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .navbar-custom .navbar-brand {
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar-custom .navbar-brand:hover { color: rgba(255,255,255,0.9); }
         .detail-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
         }
-        
-        .detail-section {
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 1.5rem;
+        .detail-card .card-body { padding: 2rem; }
+        .detail-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
         }
-        
-        .detail-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
         .section-title {
-            color: #667eea;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .contact-box {
-            background-color: #f0f9ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 8px;
-            padding: 1.25rem;
-        }
-        
-        .phone-number {
-            color: #198754;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .info-item {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        
+        .section-title i { color: var(--accent); }
+        .detail-section {
+            padding: 1.25rem 0;
+            border-bottom: 1px solid var(--border);
+            min-width: 0;
+        }
+        .detail-section:last-child { border-bottom: none; padding-bottom: 0; }
+        .detail-section:first-of-type { padding-top: 0; }
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9375rem;
+        }
+        .info-row:last-child { margin-bottom: 0; }
         .info-label {
             font-weight: 600;
-            color: #495057;
+            color: var(--text-muted);
+            min-width: 120px;
+        }
+        .contact-box {
+            background: var(--accent-light);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+        }
+        .phone-number {
+            color: #059669;
+            font-weight: 600;
+            font-size: 1.0625rem;
+            margin-bottom: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--accent);
+            border: none;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .badge-tag {
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+        /* Simple description text as on Haraj */
+        .description-plain {
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary mb-4">
+    <nav class="navbar navbar-custom navbar-dark">
         <div class="container-fluid">
             <a href="/" class="navbar-brand">
                 <i class="bi bi-arrow-right"></i> العودة للقائمة
@@ -71,100 +138,109 @@
 
     <div class="container my-4">
         <div class="card detail-card">
-            <div class="card-body p-4">
-                <h1 class="mb-4">{{ listing.title }}</h1>
-                
+            <div class="card-body">
+                <h1 class="detail-title">{{ listing.title }}</h1>
+
                 <div class="detail-section">
-                    <h3 class="section-title">الوصف</h3>
-                    <p class="text-muted">{{ listing.description or 'لا يوجد وصف' }}</p>
+                    <h3 class="section-title"><i class="bi bi-card-text"></i> الوصف</h3>
+                    <div class="description-plain">{{ listing.description or 'لا يوجد وصف' }}</div>
                 </div>
-                
+
                 <div class="detail-section">
-                    <h3 class="section-title">المعلومات الأساسية</h3>
+                    <h3 class="section-title"><i class="bi bi-info-circle"></i> المعلومات الأساسية</h3>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="info-item">
-                                <span class="info-label"><i class="bi bi-geo-alt"></i> المدينة:</span>
-                                <span class="text-muted">{{ listing.city or 'غير محدد' }}</span>
+                            <div class="info-row">
+                                <span class="info-label"><i class="bi bi-geo-alt me-1"></i> المدينة:</span>
+                                <span class="text-muted">{{ listing.city or '—' }}</span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label"><i class="bi bi-geo-alt-fill"></i> الموقع:</span>
-                                <span class="text-muted">{{ listing.location or 'غير محدد' }}</span>
+                            <div class="info-row">
+                                <span class="info-label"><i class="bi bi-pin-map me-1"></i> الموقع:</span>
+                                <span class="text-muted">{{ listing.location or '—' }}</span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label"><i class="bi bi-tag"></i> الفئة:</span>
-                                <span class="text-muted">{{ listing.category or 'غير محدد' }}</span>
+                            <div class="info-row">
+                                <span class="info-label"><i class="bi bi-tag me-1"></i> الفئة:</span>
+                                <span class="text-muted">{{ listing.category or '—' }}</span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="info-item">
-                                <span class="info-label"><i class="bi bi-currency-exchange"></i> السعر:</span>
-                                <span class="text-success fw-bold">{{ listing.price or 'غير محدد' }}</span>
+                            <div class="info-row">
+                                <span class="info-label"><i class="bi bi-currency-exchange me-1"></i> السعر:</span>
+                                <span class="fw-600 text-success">{{ listing.price or '—' }}</span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label"><i class="bi bi-clock"></i> وقت النشر:</span>
-                                <span class="text-muted">{{ listing.posted_time or 'غير محدد' }}</span>
+                            <div class="info-row">
+                                <span class="info-label"><i class="bi bi-clock me-1"></i> وقت النشر:</span>
+                                <span class="text-muted">{{ listing.posted_time or '—' }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 {% if listing.contact_info and listing.contact_info.phone_numbers %}
                 <div class="detail-section">
-                    <h3 class="section-title">معلومات الاتصال</h3>
+                    <h3 class="section-title"><i class="bi bi-telephone"></i> معلومات الاتصال</h3>
                     <div class="contact-box">
                         {% for phone in listing.contact_info.phone_numbers %}
-                        <div class="phone-number mb-2">
-                            <i class="bi bi-telephone"></i> {{ phone }}
-                        </div>
+                        <div class="phone-number"><i class="bi bi-telephone-fill me-2"></i>{{ phone }}</div>
                         {% endfor %}
                         {% if listing.contact_info.whatsapp_link %}
-                        <div class="mb-2">
-                            <a href="{{ listing.contact_info.whatsapp_link }}" target="_blank" class="text-success text-decoration-none">
-                                <i class="bi bi-whatsapp"></i> واتساب
-                            </a>
-                        </div>
+                        <a href="{{ listing.contact_info.whatsapp_link }}" target="_blank" class="text-success text-decoration-none d-inline-flex align-items-center mt-2">
+                            <i class="bi bi-whatsapp me-2"></i> واتساب
+                        </a>
                         {% endif %}
                         {% if listing.contact_info.emails %}
-                        <div class="mb-2">
-                            <span class="info-label"><i class="bi bi-envelope"></i> البريد الإلكتروني:</span>
+                        <div class="info-row mt-2">
+                            <span class="info-label"><i class="bi bi-envelope me-1"></i> البريد:</span>
                             <span class="text-muted">{{ listing.contact_info.emails|join(', ') }}</span>
                         </div>
                         {% endif %}
                     </div>
                 </div>
                 {% endif %}
-                
+
+                {% if listing.images %}
+                <div class="detail-section" id="images">
+                    <h3 class="section-title"><i class="bi bi-images"></i> الصور ({{ listing.images|length }})</h3>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        {% for img_url in listing.images %}
+                        <a href="{{ img_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                            <img src="{{ img_url }}" alt="صورة الإعلان" class="rounded" style="max-width: 120px; max-height: 120px; object-fit: cover; border: 1px solid var(--border);">
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <a href="/listing/{{ listing.listing_id }}/download-images" class="btn btn-primary btn-sm">
+                        <i class="bi bi-download me-2"></i> تحميل كل الصور (ZIP)
+                    </a>
+                </div>
+                {% endif %}
+
                 <div class="detail-section">
-                    <h3 class="section-title">البائع</h3>
-                    <div class="info-item">
-                        <span class="info-label"><i class="bi bi-person"></i> الاسم:</span>
-                        <span class="text-muted">{{ listing.seller_name or 'غير معروف' }}</span>
+                    <h3 class="section-title"><i class="bi bi-person"></i> البائع</h3>
+                    <div class="info-row">
+                        <span class="info-label">الاسم:</span>
+                        <span class="text-muted">{{ listing.seller_name or '—' }}</span>
                     </div>
                     {% if listing.seller_url %}
-                    <div class="info-item">
-                        <a href="{{ listing.seller_url }}" target="_blank" class="text-decoration-none">
-                            <i class="bi bi-box-arrow-up-right"></i> عرض ملف البائع
-                        </a>
-                    </div>
+                    <a href="{{ listing.seller_url }}" target="_blank" class="text-decoration-none text-primary small d-inline-flex align-items-center mt-2">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> عرض ملف البائع
+                    </a>
                     {% endif %}
                 </div>
-                
+
                 {% if listing.tags %}
                 <div class="detail-section">
-                    <h3 class="section-title">العلامات</h3>
-                    <div>
+                    <h3 class="section-title"><i class="bi bi-bookmark"></i> العلامات</h3>
+                    <div class="d-flex flex-wrap gap-2">
                         {% for tag in listing.tags %}
-                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        <span class="badge bg-secondary badge-tag">{{ tag }}</span>
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
-                
-                <div class="detail-section">
-                    <h3 class="section-title">الروابط</h3>
+
+                <div class="detail-section pt-3">
                     <a href="{{ listing.url }}" target="_blank" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-up-right"></i> عرض الإعلان الأصلي على حراج
+                        <i class="bi bi-box-arrow-up-right me-2"></i> عرض الإعلان الأصلي على حراج
                     </a>
                 </div>
             </div>

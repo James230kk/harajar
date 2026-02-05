@@ -4,206 +4,378 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haraj Scraper Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --nav-bg: #0f172a;
+            --accent: #0d9488;
+            --accent-hover: #0f766e;
+            --accent-light: #ccfbf1;
+            --text-primary: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+            --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+        }
+
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
             direction: rtl;
+            min-height: 100vh;
         }
-        
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        /* Navbar */
+        .navbar-custom {
+            background: var(--nav-bg);
+            padding: 0.75rem 1.5rem;
+            box-shadow: var(--shadow);
         }
-        
-        .stat-card {
-            border: none;
-            border-radius: 12px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            height: 100%;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
+        .navbar-custom .navbar-brand {
             font-weight: 700;
-            color: #667eea;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
         }
-        
-        .listing-item {
-            background: white;
-            border: 1px solid #e9ecef;
+        .navbar-custom .btn-settings {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 0.5rem 1rem;
             border-radius: 8px;
-            transition: box-shadow 0.2s;
-            margin-bottom: 1rem;
+            font-weight: 500;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .navbar-custom .btn-settings:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.3);
+            color: #fff;
+        }
+
+        /* Stat cards */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 1.25rem;
+            height: 100%;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .stat-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
+        }
+        .stat-card.featured {
+            background: linear-gradient(135deg, var(--accent) 0%, #0f766e 100%);
+            border: none;
+            color: #fff;
+        }
+        .stat-card.featured .stat-number,
+        .stat-card.featured .stat-label {
+            color: rgba(255,255,255,0.95);
+        }
+        .stat-card.featured .stat-label {
+            opacity: 0.9;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .stat-card:not(.featured) .stat-icon {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .stat-card.featured .stat-icon {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        /* Actions card */
+        .actions-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .actions-card .form-control {
+            border-radius: 8px;
+            border-color: var(--border);
+            width: 90px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .btn-start {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .btn-start:hover {
+            background: var(--accent-hover);
+            color: #fff;
+        }
+        .btn-start:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .btn-download {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+        }
+        .progress-wrap {
+            background: #e2e8f0;
+            border-radius: 999px;
+            height: 8px;
             overflow: hidden;
         }
-        
-        .listing-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent), #14b8a6);
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.3s ease;
         }
-        
+
+        /* Listings – basic details only; no description/green bar on cards */
+        .listing-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            border-right: 3px solid transparent;
+            overflow: hidden;
+        }
+        /* Ensure no green bar or description block on cards (full details only on View page) */
+        .listing-item .description-green-bar,
+        .listing-item .description-plain,
+        .listing-item [class*="description-bar"],
+        .listing-item .listing-description {
+            display: none !important;
+        }
+        /* Hide price badge (green pill) on main page listing cards only */
+        .listing-grid .bg-success.badge-pill {
+            display: none !important;
+        }
+        .listing-item:hover {
+            box-shadow: var(--shadow);
+            border-right-color: var(--accent);
+        }
         .listing-title {
-            font-size: 1.1rem;
+            font-size: 1.0625rem;
             font-weight: 600;
-            color: #212529;
-            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
             line-height: 1.4;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
-        
-        .listing-description {
-            color: #6c757d;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-top: 0.5rem;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        
-        .badge-custom {
-            padding: 0.4em 0.7em;
+        .badge-pill {
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
             font-weight: 500;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            display: inline-block;
         }
-        
         .phone-number {
-            color: #198754;
+            color: #059669;
             font-weight: 600;
-            font-size: 0.95rem;
-            word-break: break-word;
+            font-size: 0.9rem;
         }
-        
-        .contact-section {
-            min-height: 80px;
-            overflow: hidden;
+        .listing-meta {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
         }
-        
-        .info-section {
-            min-height: 80px;
-            overflow: hidden;
-        }
-        
-        .action-buttons {
+        .listing-actions-wrap {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            width: 100%;
+            min-width: 0;
+            max-width: 100%;
         }
-        
-        .action-buttons .btn {
+        .listing-actions-wrap .btn {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            text-align: center;
             white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-view, .btn-link-out {
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            padding: 0.4rem 0.6rem;
+            min-height: 34px;
+        }
+        .btn-view {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+        }
+        .btn-view:hover {
+            background: var(--accent-hover);
+            color: #fff;
+        }
+        .btn-link-out {
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .btn-link-out:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .listing-images-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .listing-images-link:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+        .listing-download-images {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-top: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .listing-download-images:hover {
+            color: var(--accent);
+        }
+
+        /* Empty state */
+        .empty-state {
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
             text-align: center;
         }
-        
-        .progress-container {
-            background-color: #e9ecef;
-            border-radius: 0.375rem;
-            height: 8px;
+        .empty-state .icon-empty {
+            font-size: 3.5rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
         }
-        
-        .progress-bar-custom {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            height: 100%;
-            transition: width 0.3s ease;
+        .empty-state code {
+            background: var(--bg-page);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
         }
-        
-        .stats-row {
-            margin-bottom: 1.5rem;
+
+        /* Modal */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
         }
-        
-        .actions-card {
-            margin-bottom: 1.5rem;
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
         }
-        
-        .listing-content {
+        .modal-title {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+        .btn-primary {
+            background: var(--accent);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Grid layout for listing row - keep all inside card */
+        .listing-grid {
             display: grid;
-            grid-template-columns: 1fr 200px 180px 140px;
-            gap: 1.5rem;
+            grid-template-columns: 1fr 180px 150px minmax(100px, 1fr);
+            gap: 1rem;
             align-items: start;
-        }
-        
-        .listing-main-content {
             min-width: 0;
-            overflow: hidden;
         }
-        
-        .listing-contact-section {
-            width: 200px;
-            flex-shrink: 0;
+        .listing-grid > * {
+            min-width: 0;
         }
-        
-        .listing-info-section {
-            width: 180px;
-            flex-shrink: 0;
-        }
-        
-        .listing-actions-section {
-            width: 140px;
-            flex-shrink: 0;
-        }
-        
-        @media (max-width: 1200px) {
-            .listing-content {
-                grid-template-columns: 1fr 180px 160px 130px;
-                gap: 1rem;
-            }
-            
-            .listing-contact-section {
-                width: 180px;
-            }
-            
-            .listing-info-section {
-                width: 160px;
-            }
-            
-            .listing-actions-section {
-                width: 130px;
-            }
-        }
-        
         @media (max-width: 992px) {
-            .listing-content {
+            .listing-grid {
                 grid-template-columns: 1fr;
-                gap: 1rem;
             }
-            
-            .listing-contact-section,
-            .listing-info-section,
-            .listing-actions-section {
-                width: 100%;
-            }
-            
-            .action-buttons {
+            .listing-actions-wrap {
                 flex-direction: row;
-                width: 100%;
+                flex-wrap: wrap;
+                min-width: 0;
+            }
+            .listing-actions-wrap .btn {
+                flex: 1 1 auto;
+                min-width: 80px;
             }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark mb-4">
+    <nav class="navbar navbar-custom navbar-dark">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Haraj Scraper Dashboard</span>
-            <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
-                <i class="bi bi-gear"></i> الإعدادات
-            </button>
+            <span class="navbar-brand mb-0">Haraj Scraper Dashboard</span>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/saved-listings" class="btn btn-settings">
+                    <i class="bi bi-bookmark-star me-1"></i> المحفوظات
+                </a>
+                <button type="button" class="btn btn-settings" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    <i class="bi bi-gear-fill me-1"></i> الإعدادات
+                </button>
+            </div>
         </div>
     </nav>
 
     <!-- Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="settingsModalLabel">إعدادات الاستخراج</h5>
@@ -212,20 +384,20 @@
                 <div class="modal-body">
                     <form id="settingsForm">
                         <div class="mb-3">
-                            <label for="settingsUsername" class="form-label">اسم المستخدم / البريد الإلكتروني</label>
-                            <input type="text" class="form-control" id="settingsUsername" 
-                                   placeholder="أدخل اسم المستخدم أو البريد الإلكتروني" 
+                            <label for="settingsUsername" class="form-label fw-600">اسم المستخدم / البريد الإلكتروني</label>
+                            <input type="text" class="form-control form-control-lg" id="settingsUsername"
+                                   placeholder="أدخل اسم المستخدم أو البريد الإلكتروني"
                                    value="{{ config.username if config else '' }}">
-                            <small class="form-text text-muted">اسم المستخدم أو البريد الإلكتروني لحساب حراج</small>
+                            <small class="text-muted">اسم المستخدم أو البريد الإلكتروني لحساب حراج</small>
                         </div>
                         <div class="mb-3">
-                            <label for="settingsPassword" class="form-label">كلمة المرور</label>
-                            <input type="password" class="form-control" id="settingsPassword" 
+                            <label for="settingsPassword" class="form-label fw-600">كلمة المرور</label>
+                            <input type="password" class="form-control form-control-lg" id="settingsPassword"
                                    placeholder="أدخل كلمة المرور">
-                            <small class="form-text text-muted">اتركه فارغاً إذا كنت لا تريد تغيير كلمة المرور</small>
+                            <small class="text-muted">اتركه فارغاً إذا كنت لا تريد تغيير كلمة المرور</small>
                         </div>
-                        <div class="alert alert-info" role="alert">
-                            <i class="bi bi-info-circle"></i> 
+                        <div class="alert alert-light border border-secondary border-opacity-25" role="alert">
+                            <i class="bi bi-info-circle text-primary me-2"></i>
                             <strong>ملاحظة:</strong> يتم حفظ بيانات الاعتماد محلياً. استخدم هذه الميزة لتسجيل الدخول تلقائياً عند الاستخراج للحصول على معلومات الاتصال.
                         </div>
                     </form>
@@ -238,188 +410,168 @@
         </div>
     </div>
 
-    <div class="container-fluid px-4">
-        <!-- Statistics Cards -->
-        <div class="row g-3 stats-row">
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="stat-number">{{ stats.total }}</div>
-                        <p class="text-muted mb-0 small">إجمالي الإعلانات</p>
-                    </div>
+    <div class="container-fluid px-4 py-4">
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card featured">
+                    <div class="stat-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                    <div class="stat-number">{{ listings|length if listings else 0 }}</div>
+                    <div class="stat-label">الإعلانات المعروضة</div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="stat-number">{{ stats.with_contact }}</div>
-                        <p class="text-muted mb-0 small">مع معلومات الاتصال</p>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-upc-scan"></i></div>
+                    <div class="stat-number">{{ stats.total }}</div>
+                    <div class="stat-label">إجمالي الإعلانات</div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="stat-number">{{ stats.cities|length if stats.cities else 0 }}</div>
-                        <p class="text-muted mb-0 small">مدن مختلفة</p>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-telephone-fill"></i></div>
+                    <div class="stat-number">{{ stats.with_contact }}</div>
+                    <div class="stat-label">مع معلومات الاتصال</div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="stat-number">{{ stats.with_images if stats.with_images else 0 }}</div>
-                        <p class="text-muted mb-0 small">إجمالي الصور</p>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div class="stat-number">{{ stats.cities|length if stats.cities else 0 }}</div>
+                    <div class="stat-label">مدن مختلفة</div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="stat-number">{{ stats.with_prices if stats.with_prices else 0 }}</div>
-                        <p class="text-muted mb-0 small">مع الأسعار</p>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-images"></i></div>
+                    <div class="stat-number">{{ stats.with_images if stats.with_images else 0 }}</div>
+                    <div class="stat-label">إجمالي الصور</div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <div class="card stat-card shadow-sm bg-primary text-white">
-                    <div class="card-body text-center">
-                        <div class="stat-number text-white">{{ listings|length if listings else 0 }}</div>
-                        <p class="mb-0 small opacity-75">الإعلانات المعروضة</p>
-                    </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-currency-exchange"></i></div>
+                    <div class="stat-number">{{ stats.with_prices if stats.with_prices else 0 }}</div>
+                    <div class="stat-label">مع الأسعار</div>
                 </div>
             </div>
         </div>
 
-        <!-- Actions Section -->
-        <div class="card shadow-sm actions-card">
-            <div class="card-body">
-                <div class="row align-items-center g-3">
-                    <div class="col-md-auto">
-                        <label for="max_listings" class="form-label mb-0 fw-bold">عدد الإعلانات:</label>
-                    </div>
-                    <div class="col-md-auto">
-                        <input type="number" id="max_listings" class="form-control" min="1" max="100" value="10" style="width: 100px;">
-                    </div>
-                    <div class="col-md-auto">
-                        <button type="button" id="startScrapingBtn" class="btn btn-primary">
-                            <i class="bi bi-play-fill"></i> بدء الاستخراج
-                        </button>
-                        <button type="button" id="stopScrapingBtn" class="btn btn-danger" style="display: none;">
-                            <i class="bi bi-stop-fill"></i> إيقاف
-                        </button>
-                    </div>
-                    <div class="col-md-auto ms-auto">
-                        <a href="/download/json" class="btn btn-outline-primary">
-                            <i class="bi bi-download"></i> تحميل JSON
-                        </a>
-                        <a href="/download/csv" class="btn btn-outline-success">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> تحميل CSV
-                        </a>
-                    </div>
+        <!-- Actions -->
+        <div class="actions-card mb-4">
+            <div class="row align-items-center g-3">
+                <div class="col-auto">
+                    <label for="category_select" class="form-label mb-0 fw-600">الفئة / Category:</label>
                 </div>
-                
-                <!-- Progress Bar -->
-                <div id="scrapingStatus" class="mt-3" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span id="statusText" class="text-primary fw-bold">جارٍ الاستخراج...</span>
-                        <span id="progressText" class="text-muted small">0 / 0</span>
-                    </div>
-                    <div class="progress-container">
-                        <div id="progressBar" class="progress-bar-custom" style="width: 0%;"></div>
-                    </div>
+                <div class="col-auto">
+                    <select id="category_select" class="form-select form-select-sm" style="min-width: 180px;">
+                        <option value="">جاري التحميل...</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label for="max_listings" class="form-label mb-0 fw-600">عدد الإعلانات:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="number" id="max_listings" class="form-control" min="1" max="500" value="10" style="width: 90px;" title="1–500 (e.g. 200, 300, 500 for big batches)">
+                    <div id="estimateTime" class="small text-muted mt-1" style="min-height: 1.2em;"></div>
+                </div>
+                <div class="col-auto">
+                    <button type="button" id="startScrapingBtn" class="btn btn-start">
+                        <i class="bi bi-play-fill me-1"></i> بدء الاستخراج
+                    </button>
+                    <button type="button" id="stopScrapingBtn" class="btn btn-danger" style="display: none;">
+                        <i class="bi bi-stop-fill me-1"></i> إيقاف
+                    </button>
+                </div>
+                <div class="col ms-auto text-start">
+                    <button type="button" id="saveToListingsBtn" class="btn btn-download btn-success me-1" title="حفظ كل الإعلانات في قاعدة البيانات">
+                        <i class="bi bi-database-add me-1"></i> حفظ في قاعدة البيانات
+                    </button>
+                    <a href="/saved-listings" class="btn btn-download btn-outline-secondary me-1">
+                        <i class="bi bi-bookmark-star me-1"></i> عرض المحفوظات
+                    </a>
+                    <a href="/download/json" class="btn btn-download btn-outline-primary me-1">
+                        <i class="bi bi-download me-1"></i> تحميل JSON
+                    </a>
+                    <a href="/download/csv" class="btn btn-download btn-outline-success">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> تحميل CSV
+                    </a>
+                </div>
+            </div>
+            <div id="scrapingStatus" class="mt-3" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span id="statusText" class="fw-600 text-primary">جارٍ الاستخراج...</span>
+                    <span id="progressText" class="text-muted small">0 / 0</span>
+                </div>
+                <div class="progress-wrap">
+                    <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Listings List -->
+        <!-- Listings -->
         {% if listings %}
         <div class="row">
             <div class="col-12">
                 {% for listing in listings %}
                 <div class="listing-item">
-                    <div class="listing-content">
-                        <!-- Main Content -->
-                        <div class="listing-main-content">
-                            <h5 class="listing-title mb-2">{{ listing.title }}</h5>
-                            <div class="d-flex flex-wrap gap-2 mb-2">
+                    <div class="listing-grid">
+                        <div>
+                            <h5 class="listing-title">{{ listing.title }}</h5>
+                            <div class="d-flex flex-wrap gap-2">
                                 {% if listing.city %}
-                                <span class="badge bg-info badge-custom">
-                                    <i class="bi bi-geo-alt"></i> {{ listing.city }}
-                                </span>
+                                <span class="badge bg-primary badge-pill"><i class="bi bi-geo-alt me-1"></i>{{ listing.city }}</span>
                                 {% endif %}
                                 {% if listing.category %}
-                                <span class="badge bg-warning text-dark badge-custom">
-                                    <i class="bi bi-tag"></i> {{ listing.category }}
-                                </span>
+                                <span class="badge bg-warning text-dark badge-pill"><i class="bi bi-tag me-1"></i>{{ listing.category }}</span>
                                 {% endif %}
                                 {% if listing.price %}
-                                <span class="badge bg-success badge-custom">
-                                    <i class="bi bi-currency-exchange"></i> {{ listing.price }}
-                                </span>
+                                <span class="badge bg-success badge-pill"><i class="bi bi-currency-exchange me-1"></i>{{ listing.price }}</span>
                                 {% endif %}
                             </div>
-                            {% if listing.description %}
-                            <p class="listing-description mb-0">
-                                {{ listing.description[:200] }}{% if listing.description|length > 200 %}...{% endif %}
-                            </p>
-                            {% endif %}
                         </div>
-                        
-                        <!-- Contact Information -->
-                        <div class="listing-contact-section contact-section">
+                        <div>
                             {% if listing.contact_info and listing.contact_info.phone_numbers %}
-                            <div>
-                                <small class="text-muted d-block mb-2 fw-semibold">معلومات الاتصال:</small>
-                                {% for phone in listing.contact_info.phone_numbers %}
-                                <div class="phone-number mb-2">{{ phone }}</div>
-                                {% endfor %}
-                                {% if listing.contact_info.whatsapp_link %}
-                                <a href="{{ listing.contact_info.whatsapp_link }}" target="_blank" class="text-success text-decoration-none d-block mb-2 small">
-                                    <i class="bi bi-whatsapp"></i> واتساب
-                                </a>
-                                {% endif %}
-                                {% if listing.contact_info.emails %}
-                                <div class="text-muted small mb-2">
-                                    <i class="bi bi-envelope"></i> <span style="word-break: break-word;">{{ listing.contact_info.emails[0] }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
+                            <div class="listing-meta mb-2 fw-600">معلومات الاتصال:</div>
+                            {% for phone in listing.contact_info.phone_numbers %}
+                            <div class="phone-number mb-1">{{ phone }}</div>
+                            {% endfor %}
+                            {% if listing.contact_info.whatsapp_link %}
+                            <a href="{{ listing.contact_info.whatsapp_link }}" target="_blank" class="text-success text-decoration-none small d-block">
+                                <i class="bi bi-whatsapp"></i> واتساب
+                            </a>
+                            {% endif %}
                             {% else %}
-                            <div class="text-muted small">لا توجد معلومات اتصال</div>
+                            <span class="listing-meta">لا توجد معلومات اتصال</span>
                             {% endif %}
                         </div>
-                        
-                        <!-- Seller Info -->
-                        <div class="listing-info-section info-section">
-                            <div class="small text-muted">
-                                <div class="mb-2 d-flex align-items-start">
-                                    <i class="bi bi-person me-1 flex-shrink-0"></i>
-                                    <span style="word-break: break-word;">{{ listing.seller_name or 'غير معروف' }}</span>
-                                </div>
-                                <div class="mb-2 d-flex align-items-center">
-                                    <i class="bi bi-images me-1 flex-shrink-0"></i>
-                                    <span>{{ listing.images|length }} صورة</span>
-                                </div>
-                                {% if listing.posted_time %}
-                                <div class="mb-2 d-flex align-items-center">
-                                    <i class="bi bi-clock me-1 flex-shrink-0"></i>
-                                    <span>{{ listing.posted_time }}</span>
+                        <div class="listing-meta">
+                            <div class="mb-1"><i class="bi bi-person me-1"></i>{{ listing.seller_name or '—' }}</div>
+                            <div class="mb-1">
+                                {% if listing.images %}
+                                <a href="/listing/{{ listing.listing_id }}#images" class="listing-images-link">
+                                    <i class="bi bi-images me-1"></i>{{ listing.images|length }} صورة
+                                </a>
+                                {% if listing.images|length > 0 %}
+                                <div>
+                                    <a href="/listing/{{ listing.listing_id }}/download-images" class="listing-download-images" target="_blank" download>
+                                        <i class="bi bi-download"></i> تحميل الصور
+                                    </a>
                                 </div>
                                 {% endif %}
+                                {% else %}
+                                <span><i class="bi bi-images me-1"></i>0 صورة</span>
+                                {% endif %}
                             </div>
+                            {% if listing.posted_time %}<div><i class="bi bi-clock me-1"></i>{{ listing.posted_time }}</div>{% endif %}
                         </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="listing-actions-section">
-                            <div class="action-buttons">
-                                <a href="/listing/{{ listing.listing_id }}" class="btn btn-primary btn-sm w-100">
-                                    <i class="bi bi-eye"></i> عرض
-                                </a>
-                                <a href="{{ listing.url }}" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
-                                    <i class="bi bi-box-arrow-up-right"></i> رابط
-                                </a>
-                            </div>
+                        <div class="listing-actions-wrap">
+                            <a href="/listing/{{ listing.listing_id }}" class="btn btn-view btn-sm">
+                                <i class="bi bi-eye me-1"></i> عرض
+                            </a>
+                            <a href="{{ listing.url }}" target="_blank" class="btn btn-link-out btn-sm">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> رابط
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -427,16 +579,11 @@
             </div>
         </div>
         {% else %}
-        <div class="card shadow-sm">
-            <div class="card-body text-center py-5">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
-                <h4 class="mt-3 text-muted">لا توجد بيانات</h4>
-                <p class="text-muted">لم يتم العثور على أي إعلانات مستخرجة</p>
-                <p class="text-muted small">قم بتشغيل السكريبت أولاً لجمع البيانات</p>
-                <code class="d-block mt-3 p-3 bg-light rounded">
-                    python haraj_scraper_selenium.py --category "https://haraj.com.sa/tags/حراج السيارات" --max-listings 20
-                </code>
-            </div>
+        <div class="empty-state">
+            <div class="icon-empty"><i class="bi bi-inbox"></i></div>
+            <h4 class="fw-600 text-secondary">لا توجد بيانات</h4>
+            <p class="text-muted mb-3">لم يتم العثور على أي إعلانات مستخرجة. قم بتشغيل الاستخراج أولاً.</p>
+            <code>python haraj_scraper_selenium.py --category "https://haraj.com.sa/tags/حراج السيارات" --max-listings 20</code>
         </div>
         {% endif %}
     </div>
@@ -445,19 +592,45 @@
     <script>
         let statusInterval;
 
+        function saveListingsToDb() {
+            const btn = document.getElementById('saveToListingsBtn');
+            if (btn) btn.disabled = true;
+            fetch('/api/save-listings', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                .then(r => {
+                    if (r.status === 404) {
+                        return Promise.reject(new Error('404'));
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'تم الحفظ بنجاح');
+                        if (data.count > 0) location.reload();
+                    } else alert('فشل الحفظ: ' + (data.message || ''));
+                    if (btn) btn.disabled = false;
+                })
+                .catch((err) => {
+                    if (err && err.message === '404') {
+                        alert('الخادم لا يدعم حفظ القاعدة. أعد تشغيل لوحة التحكم من مجلد المشروع:\n\nStop the server (Ctrl+C), then run:\npython dashboard.py\n\nor: python start_dashboard.py');
+                    } else {
+                        alert('حدث خطأ أثناء الحفظ');
+                    }
+                    if (btn) btn.disabled = false;
+                });
+        }
+        window.saveListingsToDb = saveListingsToDb;
+
         function startScraping(event) {
-            // Prevent any default form submission or page refresh
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
+            if (event) { event.preventDefault(); event.stopPropagation(); }
             const maxListings = document.getElementById('max_listings').value;
             const startBtn = document.getElementById('startScrapingBtn');
             const stopBtn = document.getElementById('stopScrapingBtn');
             const statusDiv = document.getElementById('scrapingStatus');
-
-            // Disable button immediately to prevent multiple clicks
+            const categoryUrl = document.getElementById('category_select').value;
+            if (!categoryUrl) {
+                alert('الرجاء اختيار الفئة أولاً / Please select a category first');
+                return false;
+            }
             startBtn.disabled = true;
             stopBtn.style.display = 'inline-block';
             statusDiv.style.display = 'block';
@@ -465,18 +638,13 @@
             document.getElementById('progressBar').style.width = '0%';
             document.getElementById('progressText').innerText = '0 / 0';
 
-            // Use fetch with proper error handling
             fetch('/api/start-scraping', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ max_listings: parseInt(maxListings), category_url: 'https://haraj.com.sa/tags/حراج السيارات' }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ max_listings: parseInt(maxListings), category_url: categoryUrl }),
             })
             .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => Promise.reject(err));
-                }
+                if (!response.ok) return response.json().then(err => Promise.reject(err));
                 return response.json();
             })
             .then(data => {
@@ -490,78 +658,44 @@
                 }
             })
             .catch(error => {
-                console.error('Error starting scraping:', error);
                 const errorMsg = error.error || error.message || 'فشل بدء الاستخراج.';
                 alert('خطأ: ' + errorMsg);
                 startBtn.disabled = false;
                 stopBtn.style.display = 'none';
                 statusDiv.style.display = 'none';
             });
-            
-            return false; // Prevent any form submission
+            return false;
         }
-        
-        // Attach event listeners to prevent any form submission or page refresh
+
         document.addEventListener('DOMContentLoaded', function() {
             const startBtn = document.getElementById('startScrapingBtn');
             const stopBtn = document.getElementById('stopScrapingBtn');
-            
             if (startBtn) {
-                // Remove any existing onclick handlers to avoid conflicts
                 startBtn.setAttribute('onclick', '');
-                
-                // Add event listener with capture phase
                 startBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    startScraping(e);
-                    return false;
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                    startScraping(e); return false;
                 }, true);
             }
-            
             if (stopBtn) {
-                // Remove any existing onclick handlers to avoid conflicts
                 stopBtn.setAttribute('onclick', '');
-                
-                // Add event listener with capture phase
                 stopBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    stopScraping(e);
-                    return false;
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                    stopScraping(e); return false;
                 }, true);
             }
-            
-            // Prevent any form submission that might contain these buttons
             document.addEventListener('submit', function(e) {
                 const form = e.target;
                 if (form && (form.contains(startBtn) || form.contains(stopBtn))) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
+                    e.preventDefault(); e.stopPropagation(); return false;
                 }
             }, true);
         });
 
         function stopScraping(event) {
-            // Prevent any default form submission
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            fetch('/api/stop-scraping', {
-                method: 'POST',
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => Promise.reject(err));
-                }
-                return response.json();
-            })
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            fetch('/api/stop-scraping', { method: 'POST' })
+            .then(response => response.ok ? response.json() : response.json().then(err => Promise.reject(err)))
             .then(data => {
                 alert(data.message);
                 if (!data.status.is_running) {
@@ -569,21 +703,11 @@
                     document.getElementById('startScrapingBtn').disabled = false;
                     document.getElementById('stopScrapingBtn').style.display = 'none';
                     document.getElementById('scrapingStatus').style.display = 'none';
-                    // Only reload if scraping completed successfully (not on error)
-                    if (!data.error && data.progress > 0) {
-                        // Small delay before reload to show completion message
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    }
+                    if (!data.error && data.progress > 0) setTimeout(() => location.reload(), 1000);
                 }
             })
-            .catch(error => {
-                console.error('Error stopping scraping:', error);
-                alert('فشل إيقاف الاستخراج.');
-            });
-            
-            return false; // Prevent any form submission
+            .catch(() => alert('فشل إيقاف الاستخراج.'));
+            return false;
         }
 
         function updateScrapingStatus() {
@@ -596,12 +720,11 @@
                     const startBtn = document.getElementById('startScrapingBtn');
                     const stopBtn = document.getElementById('stopScrapingBtn');
                     const statusDiv = document.getElementById('scrapingStatus');
-
                     if (data.is_running) {
                         statusText.innerText = data.current_listing || 'جارٍ الاستخراج...';
                         const progress = data.total > 0 ? (data.progress / data.total) * 100 : 0;
-                        progressBar.style.width = `${progress}%`;
-                        progressText.innerText = `${data.progress} / ${data.total}`;
+                        progressBar.style.width = progress + '%';
+                        progressText.innerText = data.progress + ' / ' + data.total;
                         startBtn.disabled = true;
                         stopBtn.style.display = 'inline-block';
                         statusDiv.style.display = 'block';
@@ -610,19 +733,11 @@
                         startBtn.disabled = false;
                         stopBtn.style.display = 'none';
                         statusDiv.style.display = 'none';
-                        if (data.error) {
-                            alert('انتهى الاستخراج مع خطأ: ' + data.error);
-                            // Don't reload on error - let user see the error and try again
-                        } else if (data.progress > 0) {
-                            // Only reload if scraping completed successfully
-                            setTimeout(() => {
-                                location.reload();
-                            }, 1500);
-                        }
+                        if (data.error) alert('انتهى الاستخراج مع خطأ: ' + data.error);
+                        else if (data.progress > 0) setTimeout(() => location.reload(), 1500);
                     }
                 })
-                .catch(error => {
-                    console.error('Error fetching scraping status:', error);
+                .catch(() => {
                     clearInterval(statusInterval);
                     document.getElementById('startScrapingBtn').disabled = false;
                     document.getElementById('stopScrapingBtn').style.display = 'none';
@@ -633,68 +748,86 @@
         function saveSettings() {
             const username = document.getElementById('settingsUsername').value.trim();
             const password = document.getElementById('settingsPassword').value.trim();
-            
             fetch('/api/settings', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password }),
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert('تم حفظ الإعدادات بنجاح');
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
-                    modal.hide();
-                    // Clear password field
+                    bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
                     document.getElementById('settingsPassword').value = '';
-                } else {
-                    alert('فشل حفظ الإعدادات: ' + data.message);
-                }
+                } else alert('فشل حفظ الإعدادات: ' + data.message);
             })
-            .catch(error => {
-                console.error('Error saving settings:', error);
-                alert('حدث خطأ أثناء حفظ الإعدادات');
-            });
+            .catch(() => alert('حدث خطأ أثناء حفظ الإعدادات'));
         }
 
         function loadSettings() {
-            fetch('/api/settings')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('settingsUsername').value = data.username || '';
-                    // Don't load password for security
+            fetch('/api/settings').then(r => r.json()).then(data => {
+                document.getElementById('settingsUsername').value = data.username || '';
+            }).catch(() => {});
+        }
+
+        function loadCategories() {
+            fetch('/api/categories')
+                .then(r => r.json())
+                .then(categories => {
+                    const sel = document.getElementById('category_select');
+                    if (!sel) return;
+                    sel.innerHTML = '';
+                    categories.forEach((c) => {
+                        const opt = document.createElement('option');
+                        opt.value = c.url;
+                        opt.textContent = c.name_ar + ' / ' + c.name_en;
+                        sel.appendChild(opt);
+                    });
+                    if (categories.length) sel.selectedIndex = 0;
                 })
-                .catch(error => {
-                    console.error('Error loading settings:', error);
+                .catch(() => {
+                    const sel = document.getElementById('category_select');
+                    if (sel) sel.innerHTML = '<option value="">فشل التحميل</option>';
                 });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load scraping status
-            fetch('/api/scraping-status')
-                .then(response => response.json())
+        function updateEstimateTime() {
+            const el = document.getElementById('estimateTime');
+            const input = document.getElementById('max_listings');
+            if (!el || !input) return;
+            const n = Math.max(1, Math.min(500, parseInt(input.value, 10) || 10));
+            fetch('/api/estimate-time?max_listings=' + n)
+                .then(r => r.json())
                 .then(data => {
-                    if (data.is_running) {
-                        document.getElementById('startScrapingBtn').disabled = true;
-                        document.getElementById('stopScrapingBtn').style.display = 'inline-block';
-                        document.getElementById('scrapingStatus').style.display = 'block';
-                        statusInterval = setInterval(updateScrapingStatus, 2000);
+                    if (data.ok && data.description) {
+                        el.textContent = data.description;
+                    } else {
+                        el.textContent = '';
                     }
-                });
-            
-            // Load settings when modal is opened
-            const settingsModal = document.getElementById('settingsModal');
-            if (settingsModal) {
-                settingsModal.addEventListener('show.bs.modal', function () {
-                    loadSettings();
-                });
+                })
+                .catch(() => { el.textContent = ''; });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            const saveBtn = document.getElementById('saveToListingsBtn');
+            if (saveBtn) saveBtn.addEventListener('click', saveListingsToDb);
+            const maxInput = document.getElementById('max_listings');
+            if (maxInput) {
+                maxInput.addEventListener('change', updateEstimateTime);
+                maxInput.addEventListener('input', updateEstimateTime);
+                updateEstimateTime();
             }
+            fetch('/api/scraping-status').then(r => r.json()).then(data => {
+                if (data.is_running) {
+                    document.getElementById('startScrapingBtn').disabled = true;
+                    document.getElementById('stopScrapingBtn').style.display = 'inline-block';
+                    document.getElementById('scrapingStatus').style.display = 'block';
+                    statusInterval = setInterval(updateScrapingStatus, 2000);
+                }
+            });
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal) settingsModal.addEventListener('show.bs.modal', loadSettings);
         });
     </script>
 </body>

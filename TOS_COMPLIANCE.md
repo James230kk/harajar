@@ -58,11 +58,20 @@ Or after 20 listings:
   - Continuing scraping...
 ```
 
+## With vs Without Login
+
+- **With login** (username/password set in Settings): Full ToS compliance is applied:
+  - 2–5 seconds between each listing, 30–60 second pause every 10 listings, 2–4 seconds between pagination, 0.5–1.5s between image downloads. This protects your account and reduces block risk.
+- **Without login** (no credentials): Fast delays (no account suspension risk):
+  - 0.15–0.4 seconds between listings, no extended pause every 10, 0.2–0.5s between pagination. Much faster for anonymous scraping.
+
+Use login when you need contact info and want to stay within ToS; use no login for quick, large batches (e.g. 200–500 listings) with no account impact.
+
 ## Configuration
 
-The compliance measures are **automatic and cannot be disabled** to ensure ToS compliance. However, you can:
+The compliance measures are **automatic when logged in** and **minimal when not**. You can:
 
-- Adjust `max_listings` to control how many listings to scrape
+- Adjust `max_listings` (1–500) for small or large batches (e.g. 200, 300, 500)
 - Use `--no-images` to skip image downloads (faster, less load)
 - Set `max_pages` to limit pagination
 

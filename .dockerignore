@@ -1,0 +1,25 @@
+# Local data – use volume in production (HARAJ_DATA_DIR)
+scraped_data/
+scraper_config.json
+
+# Git and IDE
+.git
+.gitignore
+.railway
+.vercel
+.vscode
+.idea
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+env
+
+# Docs and tests (optional – remove if you want them in image)
+*.md
+!README.md
+test_*.py
+demo_*.py

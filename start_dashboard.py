@@ -21,6 +21,13 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
+# Verify API routes are registered (avoids 404 for /api/estimate-time and /api/save-listings)
+_api_routes = sorted(r.rule for r in app.url_map.iter_rules() if r.rule.startswith('/api/'))
+if '/api/estimate-time' in _api_routes and '/api/save-listings' in _api_routes:
+    print("✓ API routes registered: /api/estimate-time, /api/save-listings, ...")
+else:
+    print("⚠ Missing API routes! Registered:", _api_routes)
+
 if __name__ == '__main__':
     # Create data directory
     Path("scraped_data").mkdir(exist_ok=True)

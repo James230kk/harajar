@@ -26,6 +26,104 @@ import shutil
 import glob
 
 
+def _path_which(name):
+    """Resolve executable in PATH (avoids shutil name in __init__ scope)."""
+    return shutil.which(name)
+
+
+def _strip_script_and_style(elem):
+    """Remove script, style, iframe, noscript from a BeautifulSoup element (in-place)."""
+    if elem is None:
+        return
+    for tag in elem.find_all(['script', 'style', 'iframe', 'noscript']):
+        tag.decompose()
+
+
+def _sanitize_text(text: str, max_length: int = 50000) -> str:
+    """Remove script-like content from extracted text."""
+    if not text or not isinstance(text, str):
+        return (text or '').strip()
+    text = text.strip()
+    # Remove blocks that look like script/code (e.g. document.write, function(, <script, etc.)
+    script_indicators = [
+        r'<script[\s\S]*?</script>',
+        r'document\.write\s*\(',
+        r'window\.onload\s*=',
+        r'parent\.postMessage\s*\(',
+        r'function\s*\([^)]*\)\s*\{',
+        r'<iframe[\s\S]*?</iframe>',
+        r'javascript:',
+        r'\.style\.\w+\s*=',
+    ]
+    for pat in script_indicators:
+        text = re.sub(pat, ' ', text, flags=re.IGNORECASE | re.DOTALL)
+    # Collapse multiple newlines/spaces
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    return text[:max_length] if len(text) > max_length else text
+
+
+def estimate_scrape_time(max_listings: int, use_compliance_delays: bool, download_images: bool = False) -> dict:
+    """
+    Estimate min/max scrape time in seconds and human-readable string.
+    use_compliance_delays: True when using login (ToS delays), False for anonymous (minimal delays).
+    """
+    n = max(1, int(max_listings))
+    list_per_page = 25
+    pages = max(1, (n + list_per_page - 1) // list_per_page)
+    # Per-listing delay: with compliance 2-5s, without 0.15-0.4s (fast, no account risk)
+    if use_compliance_delays:
+        delay_per_listing_min = 2
+        delay_per_listing_max = 5
+        extended_per_10 = (30, 60)
+        pagination_delay = (2, 4)
+    else:
+        delay_per_listing_min = 0.15
+        delay_per_listing_max = 0.4
+        extended_per_10 = (0, 0)
+        pagination_delay = (0.2, 0.5)
+    # Listing delays
+    min_sec = n * delay_per_listing_min + (n // 10) * extended_per_10[0]
+    max_sec = n * delay_per_listing_max + (n // 10) * extended_per_10[1]
+    # Pagination (between pages)
+    min_sec += (pages - 1) * pagination_delay[0] if pages > 1 else 0
+    max_sec += (pages - 1) * pagination_delay[1] if pages > 1 else 0
+    # Approximate page load time per listing (browser fetch + parse)
+    load_per_listing_min = 2
+    load_per_listing_max = 6
+    min_sec += n * load_per_listing_min
+    max_sec += n * load_per_listing_max
+    if download_images:
+        imgs_per_listing = 5
+        img_delay_min = 0.05 if not use_compliance_delays else 0.5
+        img_delay_max = 0.15 if not use_compliance_delays else 1.5
+        min_sec += n * imgs_per_listing * img_delay_min
+        max_sec += n * imgs_per_listing * img_delay_max
+    return {
+        'min_seconds': int(min_sec),
+        'max_seconds': int(max_sec),
+        'min_minutes': round(min_sec / 60, 1),
+        'max_minutes': round(max_sec / 60, 1),
+        'with_login': use_compliance_delays,
+        'description': (
+            f'~{int(min_sec // 60)}–{int(max_sec // 60)} min for {n} listings '
+            f'({"with ToS delays (logged in)" if use_compliance_delays else "no login, fast"})'
+        ),
+    }
+
+
+def _valid_posted_time(s: str, max_len: int = 80) -> bool:
+    """True only if s looks like a short time/date string, not JSON-LD or long schema."""
+    if not s or not isinstance(s, str):
+        return False
+    s = s.strip()
+    if len(s) > max_len:
+        return False
+    if s.startswith('{') or '"@context"' in s or '"@type"' in s:
+        return False
+    return True
+
+
 class HarajScraperSelenium:
     def __init__(self, output_dir: str = "scraped_data", download_images: bool = True, headless: bool = True, 
                  username: str = None, password: str = None):
@@ -71,7 +169,7 @@ class HarajScraperSelenium:
         ]
         
         # Also check PATH
-        chrome_in_path = shutil.which('google-chrome-stable') or shutil.which('google-chrome') or shutil.which('chromium')
+        chrome_in_path = _path_which('google-chrome-stable') or _path_which('google-chrome') or _path_which('chromium')
         if chrome_in_path:
             chrome_binary_paths.insert(0, chrome_in_path)
         
@@ -113,8 +211,7 @@ class HarajScraperSelenium:
         ]
         
         # Check for chromedriver in PATH
-        import shutil
-        system_chromedriver = shutil.which('chromedriver')
+        system_chromedriver = _path_which('chromedriver')
         if system_chromedriver:
             chromedriver_paths.append(system_chromedriver)
         
@@ -166,7 +263,7 @@ class HarajScraperSelenium:
             print("Make sure Chrome and ChromeDriver are installed.")
             print("Checked paths:")
             for p in chromedriver_paths[:10]:  # Show first 10
-                exists = "✓" if os.path.exists(p) else "✗"
+                exists = "[OK]" if os.path.exists(p) else "[--]"
                 print(f"  {exists} {p}")
             print("=" * 70)
             print("Attempting to use webdriver-manager ChromeDriver...")
@@ -263,6 +360,8 @@ class HarajScraperSelenium:
         self.username = username
         self.password = password
         self.is_logged_in = False
+        # When logged in: apply full ToS delays. When not: minimal delays (no account at risk).
+        self.use_compliance_delays = bool(username and password)
         
         # Login if credentials provided
         if self.username and self.password:
@@ -270,27 +369,29 @@ class HarajScraperSelenium:
     
     def _apply_tos_compliance_measures(self):
         """
-        Apply ToS-compliant measures after every 10 listings - ULTRA OPTIMIZED
+        Apply ToS-compliant measures after every 10 listings (only when using login).
+        When not logged in, no extended delays are applied to avoid blocking anonymous traffic.
         """
+        if not self.use_compliance_delays:
+            return
         if self.listing_count > 0 and self.listing_count % 10 == 0:
             print(f"\n[ToS Compliance] Applied measures after {self.listing_count} listings...")
-            
-            # Minimal delay (5-10 seconds) for maximum speed while still being respectful
-            delay = random.randint(5, 10)
+            # Extended delay 30-60 seconds (per TOS_COMPLIANCE.md) - reduces server load and block risk
+            delay = random.randint(30, 60)
             print(f"  - Extended delay: {delay} seconds")
             time.sleep(delay)
-            
             # Clear cookies every 20 listings
             if self.listing_count % 20 == 0:
                 self.driver.delete_all_cookies()
                 print("  - Cookies cleared")
-            
-            # Rotate user agent by updating driver options
+            # Rotate user agent
             if self.listing_count % 30 == 0:
                 user_agent = random.choice(self.user_agents)
-                self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
-                print("  - User-Agent rotated")
-            
+                try:
+                    self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
+                    print("  - User-Agent rotated")
+                except Exception:
+                    pass
             print("  - Continuing scraping...\n")
     
     def login(self):
@@ -358,37 +459,34 @@ class HarajScraperSelenium:
                     
                     if profile_indicators or 'haraj.com.sa' in self.driver.current_url:
                         self.is_logged_in = True
-                        print("  ✓ Login successful!")
+                        print("  [OK] Login successful!")
                         return True
                     else:
-                        print("  ✗ Login may have failed. Check credentials.")
+                        print("  [--] Login may have failed. Check credentials.")
                         return False
                 else:
                     print("  ✗ Could not find submit button")
                     return False
             else:
-                print("  ✗ Could not find login form fields")
+                print("  [--] Could not find login form fields")
                 return False
                 
         except Exception as e:
-            print(f"  ✗ Login error: {e}")
+            print(f"  [--] Login error: {e}")
             return False
     
     def get_page(self, url: str) -> Optional[BeautifulSoup]:
-        """Load page with Selenium and return BeautifulSoup - ULTRA OPTIMIZED"""
+        """Load page with Selenium and return BeautifulSoup. Includes ToS-friendly wait."""
         try:
             self.driver.get(url)
-            time.sleep(0.5)  # Minimal wait - just enough for initial load
-            
-            # Quick check for body (no long wait)
+            # ToS: 2-4 second wait after page load (human-like, gives DOM time to render)
+            time.sleep(random.uniform(2, 4))
             try:
-                WebDriverWait(self.driver, 1).until(
+                WebDriverWait(self.driver, 3).until(
                     EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
-            except:
+            except Exception:
                 pass
-            
-            # Get page source immediately - no scrolling needed for basic extraction
             page_source = self.driver.page_source
             return BeautifulSoup(page_source, 'html.parser')
         except Exception as e:
@@ -422,68 +520,131 @@ class HarajScraperSelenium:
         if not soup:
             return listing_data
         
-        # Extract title - try multiple methods
+        # Extract title - try multiple methods (strip script/style so no raw script appears)
         title_elem = soup.find('h1')
         if title_elem:
-            listing_data['title'] = title_elem.get_text(strip=True)
+            title_soup = BeautifulSoup(str(title_elem), 'html.parser')
+            root = title_soup.find()
+            if root:
+                _strip_script_and_style(root)
+            listing_data['title'] = _sanitize_text(title_soup.get_text(strip=True), max_length=2000)
         else:
             # Try using Selenium to find title
             try:
                 title_elements = self.driver.find_elements(By.TAG_NAME, "h1")
                 if title_elements:
-                    listing_data['title'] = title_elements[0].text.strip()
+                    listing_data['title'] = _sanitize_text(title_elements[0].text.strip(), max_length=2000)
                 else:
                     # Try data-testid
                     title_elements = self.driver.find_elements(By.XPATH, "//*[@data-testid='post_title']")
                     if title_elements:
-                        listing_data['title'] = title_elements[0].text.strip()
-            except:
+                        listing_data['title'] = _sanitize_text(title_elements[0].text.strip(), max_length=2000)
+            except Exception:
                 pass
-        
-        # Extract description/article content - try multiple methods
+
+        # Extract description/article content - strip script/style so no raw script appears
         article = soup.find('article')
         if article:
-            listing_data['description'] = article.get_text(strip=True)
+            article_soup = BeautifulSoup(str(article), 'html.parser')
+            root = article_soup.find()
+            if root:
+                _strip_script_and_style(root)
+            listing_data['description'] = _sanitize_text(article_soup.get_text(strip=True), max_length=50000)
         else:
             # Try using Selenium
             try:
                 article_elements = self.driver.find_elements(By.XPATH, "//article[@data-testid='post-article']")
                 if article_elements:
-                    listing_data['description'] = article_elements[0].text.strip()
+                    listing_data['description'] = _sanitize_text(article_elements[0].text.strip(), max_length=50000)
                 else:
                     # Try any article tag
                     article_elements = self.driver.find_elements(By.TAG_NAME, "article")
                     if article_elements:
-                        listing_data['description'] = article_elements[0].text.strip()
-            except:
+                        listing_data['description'] = _sanitize_text(article_elements[0].text.strip(), max_length=50000)
+            except Exception:
                 pass
         
-        # Try to find price using Selenium (more reliable for dynamic content)
+        # Extract price - multiple methods for Haraj
         try:
-            price_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'ريال') or contains(text(), 'ر.س')]")
-            for elem in price_elements:
-                text = elem.text.strip()
-                if re.search(r'\d+', text):
-                    listing_data['price'] = text
+            # Method 1: data-testid / aria (Haraj may use these)
+            for selector in [
+                "//*[contains(@data-testid, 'price') or @data-testid='post_price']",
+                "//*[@aria-label and (contains(@aria-label, 'ريال') or contains(@aria-label, 'السعر'))]",
+                "//*[contains(@class, 'price') and (contains(., 'ريال') or contains(., 'ر.س'))]",
+                "//*[contains(text(), 'ريال') or contains(text(), 'ر.س')]",
+            ]:
+                price_elems = self.driver.find_elements(By.XPATH, selector)
+                for elem in price_elems:
+                    text = (elem.text or '').strip()
+                    if text and re.search(r'\d+', text) and ('ريال' in text or 'ر.س' in text):
+                        listing_data['price'] = text
+                        break
+                if listing_data['price']:
                     break
-        except:
+            # Method 2: Soup fallback - regex in page text (must include digits)
+            if not listing_data['price'] and soup:
+                page_text = soup.get_text() if hasattr(soup, 'get_text') else str(soup)
+                price_match = re.search(r'[\d,]+\s*(?:ريال|ر\.س)', page_text)
+                if price_match:
+                    listing_data['price'] = price_match.group(0).strip()
+        except Exception:
             pass
-        
+
         # Extract location/city
         try:
             city_elements = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/city/')]")
             if city_elements:
                 listing_data['city'] = city_elements[0].text.strip()
                 listing_data['location'] = listing_data['city']
-        except:
+            if not listing_data['city'] and soup:
+                city_link = soup.find('a', href=re.compile(r'/city/'))
+                if city_link:
+                    listing_data['city'] = city_link.get_text(strip=True)
+                    listing_data['location'] = listing_data['city']
+        except Exception:
             pass
-        
-        # Extract posted time
+
+        # Extract posted time / publication date - only short time strings, never JSON-LD
         try:
-            time_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'الآن') or contains(text(), 'منذ')]")
-            if time_elements:
-                listing_data['posted_time'] = time_elements[0].text.strip()
-        except:
+            def set_posted_time(val):
+                v = (val or '').strip()
+                if _valid_posted_time(v):
+                    listing_data['posted_time'] = v
+                    return True
+                listing_data['posted_time'] = ''
+                return False
+
+            # Method 1: time element (datetime attribute is ideal) - datetime is ISO, keep short
+            time_elems = self.driver.find_elements(By.XPATH, "//time[@datetime]")
+            if time_elems:
+                dt = time_elems[0].get_attribute('datetime')
+                if dt and _valid_posted_time(dt):
+                    listing_data['posted_time'] = dt
+                elif not listing_data['posted_time']:
+                    set_posted_time(time_elems[0].text)
+            if not listing_data['posted_time']:
+                time_elems = self.driver.find_elements(By.XPATH,
+                    "//*[contains(@data-testid, 'time') or contains(@data-testid, 'date')]")
+                if time_elems:
+                    set_posted_time(time_elems[0].text)
+            if not listing_data['posted_time']:
+                time_elems = self.driver.find_elements(By.XPATH,
+                    "//*[contains(text(), 'الآن') or contains(text(), 'منذ') or contains(text(), 'قبل')]")
+                for elem in time_elems:
+                    text = (elem.text or '').strip()
+                    if text and len(text) < 50 and set_posted_time(text):
+                        break
+            # Method 2: Soup fallback - only if parent is not script (avoid JSON-LD)
+            if not listing_data['posted_time'] and soup:
+                for s in soup.find_all(string=re.compile(r'الآن|منذ|قبل|ago', re.IGNORECASE)):
+                    t = s.strip() if hasattr(s, 'strip') else str(s).strip()
+                    if _valid_posted_time(t):
+                        parent = s.parent if hasattr(s, 'parent') else None
+                        if parent and parent.name and parent.name.lower() == 'script':
+                            continue
+                        listing_data['posted_time'] = t
+                        break
+        except Exception:
             pass
         
         # Extract seller information
@@ -495,18 +656,39 @@ class HarajScraperSelenium:
         except:
             pass
         
-        # Extract category and tags
+        # Extract category and tags - only from listing content to avoid nav/breadcrumb (e.g. "Car auction")
         try:
-            tag_elements = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/tags/')]")
             tags = []
-            for elem in tag_elements:
-                tag_text = elem.text.strip()
-                if tag_text:
-                    tags.append(tag_text)
+            seen = set()
+            # Prefer tags inside main content (article, main, or post container) so we get listing-specific tags
+            content_selectors = [
+                "//article//a[contains(@href, '/tags/')]",
+                "//main//a[contains(@href, '/tags/')]",
+                "//*[contains(@data-testid, 'post') or contains(@class, 'post') or contains(@class, 'listing')]//a[contains(@href, '/tags/')]",
+                "//*[@data-testid='post-article']/..//a[contains(@href, '/tags/')]",  # parent of article
+            ]
+            for selector in content_selectors:
+                tag_elements = self.driver.find_elements(By.XPATH, selector)
+                for elem in tag_elements:
+                    tag_text = (elem.text or '').strip()
+                    if tag_text and tag_text not in seen:
+                        tags.append(tag_text)
+                        seen.add(tag_text)
+            # Fallback: all /tags/ links on page, but then prefer non-"حراج السيارات" for category
+            if not tags:
+                tag_elements = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/tags/')]")
+                for elem in tag_elements:
+                    tag_text = (elem.text or '').strip()
+                    if tag_text and tag_text not in seen:
+                        tags.append(tag_text)
+                        seen.add(tag_text)
             listing_data['tags'] = tags
             if tags:
-                listing_data['category'] = tags[0]
-        except:
+                # Use first listing-specific tag; skip generic "حراج السيارات" if we have others
+                generic_car = 'حراج السيارات'
+                non_generic = [t for t in tags if t != generic_car]
+                listing_data['category'] = (non_generic[0] if non_generic else tags[0])
+        except Exception:
             pass
         
         # Extract images - use Selenium to find all images
@@ -762,9 +944,11 @@ class HarajScraperSelenium:
         self._apply_tos_compliance_measures()
         
         print(f"Scraping: {listing_url}")
-        
-        # Minimal delay for speed (0.2-0.5 seconds)
-        delay = random.uniform(0.2, 0.5)
+        # With login: ToS 2-5s between listings. Without login: fast 0.15-0.4s (no account risk).
+        if self.use_compliance_delays:
+            delay = random.uniform(2, 5)
+        else:
+            delay = random.uniform(0.15, 0.4)
         time.sleep(delay)
         
         soup = self.get_page(listing_url)
@@ -792,8 +976,11 @@ class HarajScraperSelenium:
                         'url': img_url,
                         'local_path': local_path
                     })
-                # Minimal delay between image downloads
-                time.sleep(random.uniform(0.1, 0.3))
+                # With login: 0.5-1.5s between image downloads. Without: fast.
+                if self.use_compliance_delays:
+                    time.sleep(random.uniform(0.5, 1.5))
+                else:
+                    time.sleep(random.uniform(0.05, 0.15))
             
             listing_data['downloaded_images'] = downloaded_images
         
@@ -802,128 +989,151 @@ class HarajScraperSelenium:
         
         return listing_data
     
-    def find_listing_urls(self, category_url: str, max_pages: int = 10) -> List[str]:
-        """Find all listing URLs from a category page"""
+    def _extract_listing_links_from_page(self, seen: set) -> List[str]:
+        """Extract listing URLs from current page. Haraj format: /1234567890/title-slug/ (8+ digit ID)."""
+        page_urls = []
+        # Match haraj.com.sa with numeric ID (8+ digits) – Haraj uses long IDs
+        listing_pattern = re.compile(
+            r'https?://(?:www\.)?haraj\.com\.sa/(\d{8,})/',
+            re.IGNORECASE
+        )
+        skip_paths = ('/city/', '/users/', '/tags/', '/search/', '/post', '/sitemap', '/en/')
+        all_links = self.driver.find_elements(By.TAG_NAME, "a")
+        for link in all_links:
+            try:
+                href = link.get_attribute('href')
+                if not href or 'haraj.com.sa' not in href:
+                    continue
+                if any(s in href for s in skip_paths):
+                    continue
+                if not listing_pattern.search(href):
+                    continue
+                # Normalize: ensure trailing slash, strip fragment and query
+                clean = href.split('#')[0].split('?')[0].strip()
+                if not clean.endswith('/'):
+                    clean = clean + '/'
+                if clean not in seen:
+                    seen.add(clean)
+                    page_urls.append(clean)
+            except Exception:
+                continue
+        return page_urls
+
+    def _click_view_more_if_present(self) -> bool:
+        """Click 'مشاهدة المزيد' (View more) button if present. Returns True if clicked."""
+        try:
+            view_more_selectors = [
+                "//a[contains(text(), 'مشاهدة المزيد')]",
+                "//button[contains(text(), 'مشاهدة المزيد')]",
+                "//*[contains(text(), 'مشاهدة المزيد') and (self::a or self::button or @role='button')]",
+            ]
+            for xpath in view_more_selectors:
+                els = self.driver.find_elements(By.XPATH, xpath)
+                for el in els:
+                    if el.is_displayed() and el.is_enabled():
+                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
+                        time.sleep(0.3)
+                        el.click()
+                        time.sleep(1.2 if self.use_compliance_delays else 0.6)
+                        return True
+        except Exception:
+            pass
+        return False
+
+    def find_listing_urls(self, category_url: str, max_pages: int = 10, target_count: int = None) -> List[str]:
+        """Find listing URLs from category. Scrolls and clicks 'View more' until we have target_count URLs or max_pages."""
         listing_urls = []
-        
+        seen = set()
+        time.sleep(random.uniform(0.8, 1.5))
+
         for page in range(1, max_pages + 1):
             if page == 1:
                 url = category_url
             else:
-                if '?' in category_url:
-                    url = f"{category_url}&page={page}"
-                else:
-                    url = f"{category_url}?page={page}"
-            
-            print(f"Fetching listings from page {page}...")
+                url = f"{category_url}&page={page}" if '?' in category_url else f"{category_url}?page={page}"
+
+            print(f"Fetching page {page}...")
             try:
                 self.driver.get(url)
-                time.sleep(0.8)  # Minimal wait
+                if self.use_compliance_delays:
+                    time.sleep(random.uniform(2, 4))
+                else:
+                    time.sleep(random.uniform(1.0, 1.5))
             except Exception as e:
                 print(f"Error loading page {page}: {e}")
                 break
-            
-            # Quick check for body
+
             try:
-                WebDriverWait(self.driver, 2).until(
+                WebDriverWait(self.driver, 8).until(
                     EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
-            except:
+            except Exception:
                 pass
-            
-            # Quick scroll to load content (minimal wait)
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(0.4)  # Minimal wait
-            self.driver.execute_script("window.scrollTo(0, 0);")
-            time.sleep(0.2)  # Minimal wait
-            
-            # Find all listing links - improved selector
-            try:
-                # Try multiple selectors to find listing links
-                page_urls = []
-                
-                # Method 1: Find all links and filter by pattern
-                all_links = self.driver.find_elements(By.TAG_NAME, "a")
-                for link in all_links:
-                    try:
-                        href = link.get_attribute('href')
-                        if href:
-                            # Pattern: /11173528712/title/ or /11173528712/encoded-title/
-                            if re.search(r'/\d{10,}/[^/]+/?$', href) and 'haraj.com.sa' in href:
-                                # Clean and normalize URL
-                                if href.endswith('/'):
-                                    clean_url = href
-                                else:
-                                    clean_url = href + '/'
-                                
-                                if clean_url not in listing_urls and clean_url not in page_urls:
-                                    page_urls.append(clean_url)
-                    except:
-                        continue
-                
-                # Method 2: Try finding links with data-testid or specific classes
-                if not page_urls:
-                    try:
-                        # Look for post cards or listing containers
-                        post_links = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/') and string-length(@href) > 20]")
-                        for link in post_links:
-                            href = link.get_attribute('href')
-                            if href and re.search(r'/\d{10,}/', href) and 'haraj.com.sa' in href:
-                                if href.endswith('/'):
-                                    clean_url = href
-                                else:
-                                    clean_url = href + '/'
-                                if clean_url not in listing_urls and clean_url not in page_urls:
-                                    page_urls.append(clean_url)
-                    except:
-                        pass
-                
-                # Remove duplicates
-                page_urls = list(dict.fromkeys(page_urls))
-                
-                if not page_urls:
-                    print(f"No more listings found on page {page}")
-                    # Try one more scroll and wait
-                    if page == 1:
-                        time.sleep(3)
-                        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                        time.sleep(2)
-                        # Retry once
-                        all_links = self.driver.find_elements(By.TAG_NAME, "a")
-                        for link in all_links:
-                            try:
-                                href = link.get_attribute('href')
-                                if href and re.search(r'/\d{10,}/[^/]+/?$', href) and 'haraj.com.sa' in href:
-                                    if href.endswith('/'):
-                                        clean_url = href
-                                    else:
-                                        clean_url = href + '/'
-                                    if clean_url not in listing_urls and clean_url not in page_urls:
-                                        page_urls.append(clean_url)
-                            except:
-                                continue
-                        page_urls = list(dict.fromkeys(page_urls))
-                    
-                    if not page_urls:
-                        break
-                
+
+            # On page 1: scroll and click "مشاهدة المزيد" until we have enough URLs or no more button
+            page_urls = []
+            scroll_rounds = max(25, (target_count or 20)) if page == 1 else 5
+            for scroll_round in range(scroll_rounds):
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(1.2 if self.use_compliance_delays else 0.5)
+                # Try to click View more to load more listings
+                if self._click_view_more_if_present():
+                    time.sleep(0.8 if self.use_compliance_delays else 0.4)
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(0.5 if self.use_compliance_delays else 0.3)
+
+                page_urls = self._extract_listing_links_from_page(seen)
                 listing_urls.extend(page_urls)
-                print(f"Found {len(page_urls)} listings on page {page}")
-            except Exception as e:
-                print(f"Error finding listings on page {page}: {e}")
-                import traceback
-                traceback.print_exc()
+                if page_urls:
+                    seen.update(page_urls)
+
+                if target_count and len(listing_urls) >= target_count:
+                    break
+            else:
+                page_urls = self._extract_listing_links_from_page(seen)
+                listing_urls.extend(page_urls)
+
+            # Dedupe while preserving order
+            listing_urls = list(dict.fromkeys(listing_urls))
+            seen.update(listing_urls)
+
+            print(f"Page {page}: total {len(listing_urls)} URLs")
+
+            if target_count and len(listing_urls) >= target_count:
+                listing_urls = listing_urls[:target_count]
+                print(f"Reached target {target_count} URLs.")
+                return listing_urls
+
+            if not page_urls and page > 1:
                 break
-            
-            time.sleep(0.5)  # Reduced delay between pages
-        
+
+            if page == 1 and not listing_urls:
+                time.sleep(2)
+                for _ in range(5):
+                    self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    time.sleep(1)
+                    self._click_view_more_if_present()
+                page_urls = self._extract_listing_links_from_page(seen)
+                listing_urls.extend(page_urls)
+                if page_urls:
+                    print(f"After extra scroll: {len(page_urls)} more (total: {len(listing_urls)})")
+                if not listing_urls:
+                    break
+
+            if self.use_compliance_delays:
+                time.sleep(random.uniform(2, 4))
+            else:
+                time.sleep(random.uniform(0.3, 0.6))
+
+        if target_count and len(listing_urls) > target_count:
+            listing_urls = listing_urls[:target_count]
         return listing_urls
     
     def scrape_category(self, category_url: str, max_listings: int = 50, max_pages: int = 10) -> List[Dict]:
         """Scrape all listings from a category"""
         print(f"Scraping category: {category_url}")
         
-        listing_urls = self.find_listing_urls(category_url, max_pages)
+        listing_urls = self.find_listing_urls(category_url, max_pages=max_pages, target_count=max_listings)
         listing_urls = listing_urls[:max_listings]
         
         print(f"Found {len(listing_urls)} listings to scrape")
